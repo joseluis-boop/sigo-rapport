@@ -1,0 +1,736 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sigo Seguros · Asistente de rapport</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #F4EDE0;
+      --bg-card: #FBF7EE;
+      --ink: #1F2A1B;
+      --ink-soft: #4A5443;
+      --terracotta: #C75D3A;
+      --terracotta-dark: #A24727;
+      --mustard: #D9A441;
+      --forest: #2D4A2B;
+      --rule: #D6CBB3;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: 'IBM Plex Sans', system-ui, sans-serif;
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+    .serif { font-family: 'Fraunces', Georgia, serif; }
+    .mono { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+    /* Header */
+    header.top {
+      border-bottom: 1px solid var(--rule);
+    }
+    header.top .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 20px 0;
+    }
+    .brand {
+      display: flex;
+      gap: 12px;
+      align-items: baseline;
+    }
+    .brand .name {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 2px;
+      color: var(--terracotta);
+    }
+    .brand .sub {
+      font-size: 13px;
+      color: var(--ink-soft);
+    }
+    .ver {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      color: var(--ink-soft);
+    }
+
+    /* Hero */
+    section.hero { padding: 48px 0 32px; }
+    h1.title {
+      font-family: 'Fraunces', Georgia, serif;
+      font-weight: 600;
+      font-size: clamp(36px, 5vw, 56px);
+      line-height: 1.05;
+      margin-bottom: 16px;
+    }
+    h1.title em {
+      font-style: italic;
+      color: var(--terracotta);
+    }
+    p.lede {
+      font-size: 17px;
+      color: var(--ink-soft);
+      max-width: 640px;
+      margin-bottom: 32px;
+    }
+
+    /* Search */
+    .search-row {
+      display: flex;
+      gap: 12px;
+      max-width: 560px;
+      flex-wrap: wrap;
+    }
+    .input-wrap {
+      position: relative;
+      flex: 1;
+      min-width: 240px;
+    }
+    .input-wrap input {
+      width: 100%;
+      padding: 16px 16px 16px 48px;
+      font-size: 17px;
+      font-family: inherit;
+      background: var(--bg-card);
+      border: 1px solid var(--rule);
+      border-radius: 2px;
+      color: var(--ink);
+      outline: none;
+    }
+    .input-wrap input:focus {
+      border-color: var(--terracotta);
+      box-shadow: 0 0 0 2px rgba(199, 93, 58, 0.2);
+    }
+    .input-wrap .ico {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--ink-soft);
+      width: 20px; height: 20px;
+    }
+    button.go {
+      padding: 16px 32px;
+      font-size: 16px;
+      font-family: inherit;
+      font-weight: 500;
+      background: var(--terracotta);
+      color: #FBF7EE;
+      border: none;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: opacity 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    button.go:hover:not(:disabled) { opacity: 0.92; }
+    button.go:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .error {
+      margin-top: 16px;
+      color: var(--terracotta-dark);
+      font-size: 14px;
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
+
+    /* Results */
+    section.results { padding-bottom: 64px; display: none; }
+    section.results.show { display: block; }
+
+    .location-head {
+      padding-bottom: 24px;
+      margin-bottom: 40px;
+      border-bottom: 1px solid var(--rule);
+      animation: rise 0.5s ease-out both;
+    }
+    .location-head .zip {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      margin-bottom: 8px;
+    }
+    .location-head h2 {
+      font-family: 'Fraunces', Georgia, serif;
+      font-weight: 600;
+      font-size: 36px;
+    }
+    .location-head h2 .state { color: var(--forest); }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+    @media (min-width: 768px) {
+      .grid { grid-template-columns: 1fr 1fr; }
+    }
+    .card {
+      background: var(--bg-card);
+      padding: 24px;
+      border-top: 3px solid var(--mustard);
+      animation: rise 0.5s ease-out both;
+    }
+    .card.terracotta { border-top-color: var(--terracotta); }
+    .card.forest { border-top-color: var(--forest); }
+    .card .label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .card .temp {
+      font-family: 'Fraunces', Georgia, serif;
+      font-weight: 600;
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+    .card .desc {
+      font-size: 14px;
+      color: var(--ink-soft);
+      margin-bottom: 16px;
+    }
+    .card ul { list-style: none; }
+    .card li {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+      font-size: 14px;
+    }
+    .card li:last-child { margin-bottom: 0; }
+    .card li .num {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      margin-top: 3px;
+      color: var(--terracotta);
+    }
+    .card.forest li .num { color: var(--forest); }
+    .card .quote {
+      padding-top: 12px;
+      border-top: 1px solid var(--rule);
+    }
+    .card .quote .lbl {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      margin-bottom: 4px;
+    }
+    .card .quote .q {
+      font-family: 'Fraunces', Georgia, serif;
+      font-style: italic;
+      font-size: 15px;
+    }
+
+    /* Icebreakers */
+    section.breakers { margin-top: 40px; animation: rise 0.5s ease-out both; animation-delay: 0.25s; }
+    section.breakers .head {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    section.breakers h3 {
+      font-family: 'Fraunces', Georgia, serif;
+      font-weight: 600;
+      font-size: 24px;
+    }
+    .breaker {
+      background: var(--bg-card);
+      padding: 20px;
+      border-left: 4px solid var(--terracotta);
+      margin-bottom: 12px;
+    }
+    .breaker p {
+      font-family: 'Fraunces', Georgia, serif;
+      font-style: italic;
+      font-size: 17px;
+      line-height: 1.4;
+    }
+
+    .reset {
+      margin-top: 40px;
+      text-align: center;
+    }
+    .reset button {
+      background: transparent;
+      border: 1px solid var(--rule);
+      padding: 10px 16px;
+      font-size: 13px;
+      font-family: inherit;
+      color: var(--ink-soft);
+      cursor: pointer;
+      border-radius: 2px;
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .reset button:hover { border-color: var(--ink-soft); }
+
+    /* Empty state */
+    .empty {
+      padding: 32px 0;
+      border-top: 1px solid var(--rule);
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+    }
+    @media (min-width: 768px) {
+      .empty { grid-template-columns: repeat(4, 1fr); }
+    }
+    .empty .feat { padding-top: 24px; }
+    .empty .feat .ico { color: var(--terracotta); width: 22px; height: 22px; }
+    .empty .feat h4 {
+      font-family: 'Fraunces', Georgia, serif;
+      font-weight: 600;
+      font-size: 18px;
+      margin-top: 12px;
+    }
+    .empty .feat p {
+      font-size: 13px;
+      color: var(--ink-soft);
+      margin-top: 4px;
+    }
+    .empty.hidden { display: none; }
+
+    /* Footer */
+    footer.foot {
+      border-top: 1px solid var(--rule);
+      padding: 24px 0;
+      font-size: 12px;
+      color: var(--ink-soft);
+    }
+
+    /* Spinner */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spin { animation: spin 0.8s linear infinite; width: 16px; height: 16px; }
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    svg.icon { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  </style>
+</head>
+<body>
+
+  <header class="top">
+    <div class="wrap row">
+      <div class="brand">
+        <span class="name">Sigo Seguros</span>
+        <span class="sub">Asistente de rapport</span>
+      </div>
+      <span class="ver">v1.0</span>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <section class="hero">
+      <h1 class="title">Conoce la zona del cliente y <em>crea</em> conexión.</h1>
+      <p class="lede">Ingresa el código postal del cliente para tener clima, datos curiosos y temas positivos de conversación. Solo para construir confianza — no son datos de cotización ni de cobertura.</p>
+
+      <div class="search-row">
+        <div class="input-wrap">
+          <svg class="icon ico" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input id="zip" type="text" inputmode="numeric" maxlength="5" placeholder="Ej. 78201" />
+        </div>
+        <button class="go" id="go">
+          <span id="goText">Buscar</span>
+        </button>
+      </div>
+      <div class="error" id="err" style="display:none">
+        <svg class="icon" viewBox="0 0 24 24" style="width:16px;height:16px"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+        <span id="errMsg"></span>
+      </div>
+    </section>
+
+    <section class="empty" id="empty">
+      <div class="feat">
+        <svg class="icon ico" viewBox="0 0 24 24"><path d="M17.5 19H9a7 7 0 1 1 6.7-9h1.8a4.5 4.5 0 0 1 0 9Z"/></svg>
+        <h4>Clima</h4>
+        <p>El clima del día para conversar</p>
+      </div>
+      <div class="feat">
+        <svg class="icon ico" viewBox="0 0 24 24"><path d="M20 10c0 7-8 12-8 12s-8-5-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+        <h4>Ciudad</h4>
+        <p>Datos curiosos para conectar</p>
+      </div>
+      <div class="feat">
+        <svg class="icon ico" viewBox="0 0 24 24"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8z"/></svg>
+        <h4>Atracciones</h4>
+        <p>Puntos de interés conocidos</p>
+      </div>
+      <div class="feat">
+        <svg class="icon ico" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <h4>Estación</h4>
+        <p>Temas según la época del año</p>
+      </div>
+    </section>
+
+    <section class="results" id="results">
+      <div class="location-head">
+        <div class="zip" id="zipBadge"></div>
+        <h2 id="cityState"></h2>
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <div class="label">
+            <svg class="icon" style="width:16px;height:16px;color:var(--mustard)" viewBox="0 0 24 24"><path d="M17.5 19H9a7 7 0 1 1 6.7-9h1.8a4.5 4.5 0 0 1 0 9Z"/></svg>
+            CLIMA AHORA
+          </div>
+          <div class="temp" id="weatherTemp"></div>
+          <div class="desc" id="weatherDesc"></div>
+          <div class="quote">
+            <div class="lbl">PARA DECIR</div>
+            <div class="q" id="weatherQuote"></div>
+          </div>
+        </div>
+
+        <div class="card forest">
+          <div class="label">
+            <svg class="icon" style="width:16px;height:16px;color:var(--forest)" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            DE TEMPORADA
+          </div>
+          <ul id="seasonal"></ul>
+        </div>
+
+        <div class="card terracotta">
+          <div class="label">
+            <svg class="icon" style="width:16px;height:16px;color:var(--terracotta)" viewBox="0 0 24 24"><path d="M20 10c0 7-8 12-8 12s-8-5-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+            DATOS DE LA ZONA
+          </div>
+          <ul id="cityFacts"></ul>
+        </div>
+
+        <div class="card">
+          <div class="label">
+            <svg class="icon" style="width:16px;height:16px;color:var(--mustard)" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+            TEMAS POSITIVOS
+          </div>
+          <ul id="positiveTopics"></ul>
+        </div>
+      </div>
+
+      <section class="breakers">
+        <div class="head">
+          <svg class="icon" style="color:var(--terracotta)" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <h3>Rompehielos listos para usar</h3>
+        </div>
+        <div id="icebreakers"></div>
+      </section>
+
+      <div class="reset">
+        <button id="reset">
+          <svg class="icon" style="width:14px;height:14px" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+          Otro código postal
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <footer class="foot">
+    <div class="wrap">
+      Esta herramienta es solo para preparación de la conversación. No genera cotizaciones, no determina elegibilidad ni cobertura. Las cotizaciones están sujetas a suscripción y regulación estatal.
+    </div>
+  </footer>
+
+  <script>
+    // ─────────────────────────────────────────────────────────
+    // APIs públicas usadas (sin keys):
+    //   - Zippopotam.us: ZIP → ciudad/estado/coordenadas
+    //   - Open-Meteo: clima actual por lat/lon
+    //   - Wikipedia REST API: resumen de la ciudad
+    // ─────────────────────────────────────────────────────────
+
+    const $ = (id) => document.getElementById(id);
+    const zipInput = $('zip');
+    const goBtn = $('go');
+    const goText = $('goText');
+    const errBox = $('err');
+    const errMsg = $('errMsg');
+    const empty = $('empty');
+    const results = $('results');
+
+    zipInput.addEventListener('input', e => {
+      e.target.value = e.target.value.replace(/\D/g, '');
+    });
+    zipInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') search();
+    });
+    goBtn.addEventListener('click', search);
+    $('reset').addEventListener('click', () => {
+      results.classList.remove('show');
+      empty.classList.remove('hidden');
+      zipInput.value = '';
+      zipInput.focus();
+    });
+
+    function showError(msg) {
+      errMsg.textContent = msg;
+      errBox.style.display = 'flex';
+    }
+    function clearError() { errBox.style.display = 'none'; }
+
+    function setLoading(loading) {
+      goBtn.disabled = loading;
+      goText.innerHTML = loading
+        ? '<svg class="icon spin" viewBox="0 0 24 24" style="width:16px;height:16px"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Buscando…'
+        : 'Buscar';
+    }
+
+    async function search() {
+      const zip = zipInput.value.trim();
+      clearError();
+      if (!/^\d{5}$/.test(zip)) {
+        showError('Ingresa un código postal válido de 5 dígitos.');
+        return;
+      }
+      setLoading(true);
+      results.classList.remove('show');
+
+      try {
+        // 1. ZIP → location
+        const locRes = await fetch(`https://api.zippopotam.us/us/${zip}`);
+        if (!locRes.ok) throw new Error('ZIP no encontrado');
+        const loc = await locRes.json();
+        const place = loc.places[0];
+        const city = place['place name'];
+        const state = place['state'];
+        const stateAbbr = place['state abbreviation'];
+        const lat = parseFloat(place['latitude']);
+        const lon = parseFloat(place['longitude']);
+
+        // 2. Clima
+        let weather = null;
+        try {
+          const wRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&temperature_unit=fahrenheit&timezone=auto`);
+          if (wRes.ok) weather = await wRes.json();
+        } catch (e) { /* clima es opcional */ }
+
+        // 3. Wikipedia (intenta "Ciudad, Estado" primero)
+        let wiki = null;
+        const tries = [`${city},_${state}`, city];
+        for (const q of tries) {
+          try {
+            const r = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(q)}`);
+            if (r.ok) {
+              const data = await r.json();
+              if (data.extract && data.type !== 'disambiguation') {
+                wiki = data;
+                break;
+              }
+            }
+          } catch (e) { /* ignore */ }
+        }
+
+        render({ zip, city, state, stateAbbr, lat, lon, weather, wiki });
+      } catch (e) {
+        showError('No pudimos encontrar ese código postal. Verifica que sea válido en EE.UU.');
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // Renderizado de resultados
+    // ─────────────────────────────────────────────────────────
+
+    const WEATHER_CODES = {
+      0:  { desc: 'soleado y despejado', friendly: 'un día soleado precioso' },
+      1:  { desc: 'mayormente despejado', friendly: 'un día tranquilo con buen sol' },
+      2:  { desc: 'parcialmente nublado', friendly: 'un día con algunas nubes' },
+      3:  { desc: 'nublado', friendly: 'un día nublado' },
+      45: { desc: 'con niebla', friendly: 'un día con neblina' },
+      48: { desc: 'con niebla densa', friendly: 'una mañana de neblina' },
+      51: { desc: 'llovizna ligera', friendly: 'una llovizna ligera' },
+      53: { desc: 'llovizna', friendly: 'una llovizna' },
+      55: { desc: 'llovizna fuerte', friendly: 'llovizna constante' },
+      61: { desc: 'lluvia ligera', friendly: 'lluvia ligera' },
+      63: { desc: 'lluvia moderada', friendly: 'lluvia moderada' },
+      65: { desc: 'lluvia fuerte', friendly: 'lluvia fuerte' },
+      71: { desc: 'nieve ligera', friendly: 'nevadita ligera' },
+      73: { desc: 'nieve moderada', friendly: 'nieve' },
+      75: { desc: 'nieve fuerte', friendly: 'nieve fuerte' },
+      80: { desc: 'chubascos', friendly: 'chubascos pasajeros' },
+      81: { desc: 'chubascos fuertes', friendly: 'chubascos' },
+      82: { desc: 'tormentas', friendly: 'tormentas' },
+      95: { desc: 'tormenta eléctrica', friendly: 'una tormenta eléctrica' },
+    };
+
+    function weatherFriendly(code) {
+      return WEATHER_CODES[code] || { desc: 'condiciones variables', friendly: 'un día interesante' };
+    }
+
+    function tempCategory(f) {
+      if (f >= 85) return 'caluroso';
+      if (f >= 70) return 'cálido y agradable';
+      if (f >= 55) return 'fresco';
+      if (f >= 40) return 'frío';
+      return 'bien frío';
+    }
+
+    function getSeason() {
+      const m = new Date().getMonth();
+      if (m >= 2 && m <= 4) return 'primavera';
+      if (m >= 5 && m <= 7) return 'verano';
+      if (m >= 8 && m <= 10) return 'otoño';
+      return 'invierno';
+    }
+
+    const SEASONAL_TOPICS = {
+      primavera: [
+        'Es buena época para festivales al aire libre y eventos comunitarios.',
+        'Comienza la temporada de béisbol — los Major Leagues regresan.',
+        'Las graduaciones de high school y universidad están cerca.',
+        'Es temporada de jardinería y mercados de productores.',
+      ],
+      verano: [
+        'Es temporada de cookouts, parrillas y reuniones familiares.',
+        'Las vacaciones de los niños llegan — muchos planes en casa.',
+        'Es plena temporada de béisbol y la NBA está en finales.',
+        'Festivales de música y eventos al aire libre por todos lados.',
+      ],
+      otoño: [
+        'Empieza la temporada de fútbol americano — la conversación obligada del fin de semana.',
+        'Vuelta a clases — muchas familias acomodando rutinas nuevas.',
+        'Halloween se acerca, las casas empiezan a decorarse.',
+        'Es temporada de festivales de cosecha y comida.',
+      ],
+      invierno: [
+        'Temporada de NFL playoffs — todo el mundo opinando.',
+        'Las fiestas están encima — fin de año en pleno.',
+        'Buena época para hablar de planes de viaje o resoluciones.',
+        'La NBA está en pleno regular season.',
+      ],
+    };
+
+    const POSITIVE_TOPICS = [
+      'Apertura de nuevos parques y espacios comunitarios.',
+      'Festivales culturales y celebraciones de la comunidad latina.',
+      'Reconocimientos a maestros, bomberos y trabajadores locales.',
+      'Negocios familiares hispanos que están creciendo en la zona.',
+      'Programas de la biblioteca pública con actividades gratuitas.',
+      'Mercados de productores y comida local los fines de semana.',
+      'Logros de estudiantes locales en concursos y becas.',
+      'Eventos deportivos juveniles y ligas comunitarias.',
+    ];
+
+    function pickN(arr, n) {
+      const copy = [...arr];
+      const out = [];
+      while (out.length < n && copy.length) {
+        out.push(copy.splice(Math.floor(Math.random() * copy.length), 1)[0]);
+      }
+      return out;
+    }
+
+    function render({ zip, city, state, stateAbbr, weather, wiki }) {
+      $('zipBadge').textContent = `📍 ${zip}`;
+      $('cityState').innerHTML = `${city}, <span class="state">${state}</span>`;
+
+      // Clima
+      if (weather && weather.current) {
+        const tF = Math.round(weather.current.temperature_2m);
+        const code = weather.current.weather_code;
+        const w = weatherFriendly(code);
+        const cat = tempCategory(tF);
+        $('weatherTemp').textContent = `${tF}°F`;
+        $('weatherDesc').textContent = `Está ${cat}, ${w.desc}.`;
+        $('weatherQuote').textContent = `"¿Cómo está el clima por allá hoy? Aquí veo que tienen ${w.friendly}, ¿están disfrutándolo?"`;
+      } else {
+        $('weatherTemp').textContent = '—';
+        $('weatherDesc').textContent = 'No pudimos obtener el clima ahora mismo.';
+        $('weatherQuote').textContent = `"¿Cómo está el clima por allá hoy en ${city}?"`;
+      }
+
+      // Datos de la ciudad
+      const cityFacts = [];
+      if (wiki && wiki.extract) {
+        // Tomar las primeras 2-3 oraciones del resumen
+        const sentences = wiki.extract.split(/(?<=\.)\s+/).slice(0, 3);
+        sentences.forEach(s => {
+          if (s.length > 20 && s.length < 280) cityFacts.push(s);
+        });
+      }
+      if (cityFacts.length === 0) {
+        cityFacts.push(
+          `${city} está ubicada en ${state}.`,
+          `Es una de las ciudades del estado de ${state} (${stateAbbr}).`,
+          `Cada ciudad tiene su personalidad — pregúntale al cliente qué le gusta de vivir ahí.`,
+        );
+      }
+      $('cityFacts').innerHTML = cityFacts.map((f, i) =>
+        `<li><span class="num">${String(i + 1).padStart(2, '0')}</span><span>${f}</span></li>`
+      ).join('');
+
+      // De temporada
+      const season = getSeason();
+      const seasonal = SEASONAL_TOPICS[season];
+      $('seasonal').innerHTML = seasonal.map((s, i) =>
+        `<li><span class="num">${String(i + 1).padStart(2, '0')}</span><span>${s}</span></li>`
+      ).join('');
+
+      // Temas positivos
+      const positive = pickN(POSITIVE_TOPICS, 4);
+      $('positiveTopics').innerHTML = positive.map(p =>
+        `<li><span class="num">✦</span><span>${p}</span></li>`
+      ).join('');
+
+      // Rompehielos
+      const breakers = buildIcebreakers({ city, state, weather, season });
+      $('icebreakers').innerHTML = breakers.map(b =>
+        `<div class="breaker"><p>"${b}"</p></div>`
+      ).join('');
+
+      empty.classList.add('hidden');
+      results.classList.add('show');
+      results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function buildIcebreakers({ city, state, weather, season }) {
+      const out = [];
+
+      // 1. Saludo geográfico
+      out.push(`Qué bueno saludarle desde ${state}. ¿Llevas mucho tiempo viviendo en ${city}?`);
+
+      // 2. Clima
+      if (weather && weather.current) {
+        const code = weather.current.weather_code;
+        const w = weatherFriendly(code);
+        const tF = Math.round(weather.current.temperature_2m);
+        out.push(`Veo que en ${city} están con ${w.friendly}, ${tF} grados. ¿Cómo está el día por allá?`);
+      } else {
+        out.push(`Cuéntame, ¿cómo está el día por ${city}?`);
+      }
+
+      // 3. De temporada
+      const seasonHooks = {
+        primavera: `Ya con la primavera entrando, ¿algún plan al aire libre estos días?`,
+        verano: `Con el calorcito del verano, ¿alguna escapada planeada con la familia?`,
+        otoño: `Ya estamos en otoño — ¿le sigues a algún equipo de fútbol americano?`,
+        invierno: `Con las fiestas encima, ¿cómo van los planes de fin de año por casa?`,
+      };
+      out.push(seasonHooks[season]);
+
+      return out;
+    }
+  </script>
+</body>
+</html>
